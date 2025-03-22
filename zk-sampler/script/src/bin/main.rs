@@ -40,8 +40,8 @@ struct Args {
     #[clap(long)]
     public_key: Option<String>,
 
-    #[clap(long)]
-    output_audio: Option<String>,
+    #[clap(long, default_value = "out.wav")]
+    output_audio: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -143,9 +143,8 @@ fn main() {
     stdin.write(&input);
 
     let output = if args.execute {
-        if let Some(audio_out_path) = &args.output_audio {
-            save_audio(audio_out_path, &transformed_samples, spec.sample_rate);
-        }
+        // Always save audio since output_audio now has a default value
+        save_audio(&args.output_audio, &transformed_samples, spec.sample_rate);
 
         AudioProofOutput {
             original_audio_hash: "0x".to_string(),
@@ -173,9 +172,8 @@ fn main() {
                 fs::write("public_values.bin", public_values).expect("Failed to write public values");
                 fs::write("verification_key.bin", vk.bytes32().as_bytes()).expect("Failed to write vk");
 
-                if let Some(audio_out_path) = &args.output_audio {
-                    save_audio(audio_out_path, &transformed_samples, spec.sample_rate);
-                }
+                // Always save audio since output_audio now has a default value
+                save_audio(&args.output_audio, &transformed_samples, spec.sample_rate);
 
                 println!("✅ Proof generated and saved.");
                 println!("📦 proof.bin, public_values.bin, verification_key.bin");
