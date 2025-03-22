@@ -20,3 +20,19 @@ pgo-data.profdata
 
 #IDE
 .idea
+
+# Audio
+*.wav
+
+# Crypto
+*.key
+*.pem
+*.pub
+*.p12
+*.sig
+
+# Proofs and outputs
+proof.bin
+public_values.bin
+verification_key.bin
+output.json
