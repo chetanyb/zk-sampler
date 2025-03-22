@@ -84,7 +84,25 @@ zkSampler is inspired by [Attested Image Editor](https://blog.succinct.xyz/tales
 
 ---
 
-#### ⚙️ 1. Local Execution (No Proof)
+#### 📝 1. Sign Audio Hash
+
+```bash
+# Get hash of input audio
+cargo run --release --bin audio_hash -- --input assets/sample.wav > audio_hash.txt
+
+# Sign using Foundry's cast
+cast sign <HASH> --private-key <PRIVATE_KEY> > sample.sig
+
+# Generate public key from private key
+cast wallet address --private-key <PRIVATE_KEY> > sample.pub
+```
+
+Save:
+
+- sample.sig → signature file
+- sample.pub → public key file
+
+#### ⚙️ 2. Local Execution (No Proof)
 
 ```bash
 cargo run --release --bin zk-sampler -- \
@@ -95,9 +113,7 @@ cargo run --release --bin zk-sampler -- \
 --transform-json transform.json
 ```
 
----
-
-#### 🔐 2. Local Proof Generation
+#### 🔐 3. Local Proof Generation
 
 ```bash
 cargo run --release --bin zk-sampler -- \
@@ -113,27 +129,6 @@ cargo run --release --bin zk-sampler -- \
 
 This command will also generate `public_values.bin` as one of the proof artifacts.
 
----
-
-#### 📝 3. Sign Audio Hash
-```bash
-# Get hash of input audio
-cargo run --release --bin hash_audio -- assets/sample.wav > audio_hash.txt
-
-# Sign using Foundry's cast
-cast sign <HASH> --private-key <PRIVATE_KEY> > sample.sig
-
-# Generate public key from private key
-cast wallet address --private-key <PRIVATE_KEY> > sample.pub
-```
-
-Save:
-
-- sample.sig → signature file
-- sample.pub → public key file
-
----
-
 #### 📤 4. Decode Public Values
 
 ```bash
@@ -147,8 +142,6 @@ Outputs:
 - has_signature
 
 These can be verified in smart contracts or shared alongside releases.
-
-
 
 📄 Example transform.json
 ```
