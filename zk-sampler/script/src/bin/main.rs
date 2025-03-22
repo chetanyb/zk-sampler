@@ -1,92 +1,72 @@
-//! An end-to-end example of using the SP1 SDK to generate a proof of a program that can be executed
-//! or have a core proof generated.
-//!
-//! You can run this script using the following command:
-//! ```shell
-//! RUST_LOG=info cargo run --release -- --execute
-//! ```
-//! or
-//! ```shell
-//! RUST_LOG=info cargo run --release -- --prove
-//! ```
-
-use alloy_sol_types::SolType;
 use clap::Parser;
-use fibonacci_lib::PublicValuesStruct;
-use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
+use hound::{WavReader, WavWriter, WavSpec, SampleFormat};
+use zk_sampler_lib::{reverse_audio, pitch_shift, time_stretch};
 
-/// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
-pub const FIBONACCI_ELF: &[u8] = include_elf!("fibonacci-program");
-
-/// The arguments for the command.
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[command(name = "zk-sampler")]
+#[command(about = "CLI for zk-audio sampler transforms")]
 struct Args {
-    #[clap(long)]
-    execute: bool,
+    /// Input WAV file path
+    #[arg(short, long)]
+    input: String,
 
-    #[clap(long)]
-    prove: bool,
+    /// Output WAV file path
+    #[arg(short, long)]
+    output: String,
 
-    #[clap(long, default_value = "20")]
-    n: u32,
+    /// Reverse the audio
+    #[arg(long)]
+    reverse: bool,
+
+    /// Pitch shift in semitones (can be negative)
+    #[arg(long)]
+    pitch: Option<i32>,
+
+    /// Time stretch factor (e.g., 0.5 for 2x speed)
+    #[arg(long)]
+    stretch: Option<f32>,
 }
 
-fn main() {
-    // Setup the logger.
-    sp1_sdk::utils::setup_logger();
-    dotenv::dotenv().ok();
-
-    // Parse the command line arguments.
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
-    if args.execute == args.prove {
-        eprintln!("Error: You must specify either --execute or --prove");
-        std::process::exit(1);
+    // Load WAV file
+    let mut reader = WavReader::open(&args.input)?;
+    let spec = reader.spec();
+    let sample_rate = spec.sample_rate as usize;
+
+    let mut samples: Vec<i16> = reader.samples::<i16>().filter_map(Result::ok).collect();
+
+    // Apply transformations
+    if args.reverse {
+        println!("Applying reverse...");
+        reverse_audio(&mut samples);
     }
 
-    // Setup the prover client.
-    let client = ProverClient::from_env();
-
-    // Setup the inputs.
-    let mut stdin = SP1Stdin::new();
-    stdin.write(&args.n);
-
-    println!("n: {}", args.n);
-
-    if args.execute {
-        // Execute the program
-        let (output, report) = client.execute(FIBONACCI_ELF, &stdin).run().unwrap();
-        println!("Program executed successfully.");
-
-        // Read the output.
-        let decoded = PublicValuesStruct::abi_decode(output.as_slice(), true).unwrap();
-        let PublicValuesStruct { n, a, b } = decoded;
-        println!("n: {}", n);
-        println!("a: {}", a);
-        println!("b: {}", b);
-
-        let (expected_a, expected_b) = fibonacci_lib::fibonacci(n);
-        assert_eq!(a, expected_a);
-        assert_eq!(b, expected_b);
-        println!("Values are correct!");
-
-        // Record the number of cycles executed.
-        println!("Number of cycles: {}", report.total_instruction_count());
-    } else {
-        // Setup the program for proving.
-        let (pk, vk) = client.setup(FIBONACCI_ELF);
-
-        // Generate the proof
-        let proof = client
-            .prove(&pk, &stdin)
-            .run()
-            .expect("failed to generate proof");
-
-        println!("Successfully generated proof!");
-
-        // Verify the proof.
-        client.verify(&proof, &vk).expect("failed to verify proof");
-        println!("Successfully verified proof!");
+    if let Some(semitones) = args.pitch {
+        println!("Applying pitch shift: {} semitones...", semitones);
+        samples = pitch_shift(&samples, semitones, sample_rate);
     }
+
+    if let Some(rate) = args.stretch {
+        println!("Applying time stretch: {}x...", rate);
+        samples = time_stretch(&samples, rate, sample_rate);
+    }
+
+    // Save output
+    let out_spec = WavSpec {
+        channels: 1,
+        sample_rate: spec.sample_rate,
+        bits_per_sample: 16,
+        sample_format: SampleFormat::Int,
+    };
+
+    let mut writer = WavWriter::create(&args.output, out_spec)?;
+    for s in samples {
+        writer.write_sample(s)?;
+    }
+    writer.finalize()?;
+
+    println!("Saved transformed audio to {}", args.output);
+    Ok(())
 }
