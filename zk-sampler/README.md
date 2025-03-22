@@ -66,11 +66,11 @@ zkSampler is inspired by [Attested Image Editor](https://blog.succinct.xyz/tales
 - 🧪 Execute or Prove modes
 - 🎼 WAV I/O support
 - 🧾 Outputs:
-- out.wav
-- proof.bin
-- public_values.bin
-- verification_key.bin
-- output.json
+    - out.wav
+    - proof.bin
+    - public_values.bin
+    - verification_key.bin
+    - output.json
 
 ---
 
@@ -78,27 +78,28 @@ zkSampler is inspired by [Attested Image Editor](https://blog.succinct.xyz/tales
 
 #### 🧰 Prerequisites
 - Rust + Cargo
-- SP1 SDK
+- [SP1 SDK](https://docs.succinct.xyz/docs/sp1/getting-started/install)
 - WAV files in assets/
-- cast (for Ethereum signing)
+- [Foundry's cast](https://book.getfoundry.sh/getting-started/installation) (for Ethereum signing)
 
 ---
 
 #### ⚙️ 1. Local Execution (No Proof)
 
+```bash
 cargo run --release --bin zk-sampler -- \
 --execute \
 --input assets/sample.wav \
 --output-audio out.wav \
 --sample-rate 44100 \
 --transform-json transform.json
-
-
+```
 
 ---
 
 #### 🔐 2. Local Proof Generation
 
+```bash
 cargo run --release --bin zk-sampler -- \
 --prove \
 --input assets/sample.wav \
@@ -108,6 +109,9 @@ cargo run --release --bin zk-sampler -- \
 --transform-json transform.json \
 --signature sample.sig \
 --public-key sample.pub
+```
+
+This command will also generate `public_values.bin` as one of the proof artifacts.
 
 ---
 
@@ -116,8 +120,11 @@ cargo run --release --bin zk-sampler -- \
 # Get hash of input audio
 cargo run --release --bin hash_audio -- assets/sample.wav > audio_hash.txt
 
-# Sign using Foundry's cast (or later via MetaMask/web wallet)
+# Sign using Foundry's cast
 cast sign <HASH> --private-key <PRIVATE_KEY> > sample.sig
+
+# Generate public key from private key
+cast wallet address --private-key <PRIVATE_KEY> > sample.pub
 ```
 
 Save:
@@ -129,7 +136,9 @@ Save:
 
 #### 📤 4. Decode Public Values
 
+```bash
 cargo run --release --bin decode_public_values -- public_values.bin
+```
 
 Outputs:
 - original_audio_hash
@@ -139,7 +148,7 @@ Outputs:
 
 These can be verified in smart contracts or shared alongside releases.
 
-⸻
+
 
 📄 Example transform.json
 ```
@@ -151,7 +160,7 @@ These can be verified in smart contracts or shared alongside releases.
 
 ```
 
-⸻
+---
 
 #### 🔮 Coming Soon
 - 🌐 Web app to upload, transform, and prove samples with a UI
@@ -159,7 +168,7 @@ These can be verified in smart contracts or shared alongside releases.
 - 🧾 On-chain Solidity verifier
 - 🧬 Support for more audio formats and transformations
 
-⸻
+---
 
 #### 🤝 Built With
 - SP1 zkVM
@@ -172,12 +181,12 @@ These can be verified in smart contracts or shared alongside releases.
 
 #### 💬 Questions or Collaborations?
 
-Hit us up if you’re a:
+Hit us up if you're a:
 - Sampling platform 🧰
 - Plugin dev 🎛
 - Music DAO 🎵
 - Artist 🔊
 
-I’d love to build with you.
+I'd love to build with you.
 
 ---
