@@ -1,22 +1,16 @@
 use alloy_sol_types::sol;
 
-sol! {
-    /// The public values encoded as a struct that can be easily deserialized inside Solidity.
-    struct PublicValuesStruct {
-        uint32 n;
-        uint32 a;
-        uint32 b;
-    }
-}
+mod dsp;
+mod transformations;
 
-/// Compute the n'th fibonacci number (wrapping around on overflows), using normal Rust code.
-pub fn fibonacci(n: u32) -> (u32, u32) {
-    let mut a = 0u32;
-    let mut b = 1u32;
-    for _ in 0..n {
-        let c = a.wrapping_add(b);
-        a = b;
-        b = c;
+pub use dsp::{reverse_audio, pitch_shift, time_stretch};
+pub use transformations::{AudioTransform, AudioTransformInput, SignatureData};
+
+sol! {
+    struct AudioProofPublicValues {
+        bytes32 original_audio_hash;
+        bytes32 transformed_audio_hash;
+        bytes32 signer_public_key;
+        bool has_signature;
     }
-    (a, b)
 }

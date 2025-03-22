@@ -1,9 +1,12 @@
 [package]
+name = "zk-sampler-program"
 version = "0.1.0"
-name = "fibonacci-program"
 edition = "2021"
 
 [dependencies]
-alloy-sol-types = { workspace = true }
 sp1-zkvm = "4.0.0"
-fibonacci-lib = { path = "../lib" }
+sha3 = "0.10.8"
+hex = "0.4.3"
+zk-sampler-lib = { path = "../lib" }
+alloy-sol-types = "0.7.7"
+k256 = "0.13"
