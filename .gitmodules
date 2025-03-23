@@ -1,0 +1,3 @@
+[submodule "zk-sampler/verifier/lib/forge-std"]
+	path = zk-sampler/verifier/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
