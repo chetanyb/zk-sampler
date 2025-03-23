@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
     let result = hasher.finalize();
 
     let hex_hash = hex::encode(result);
-    println!("Audio hash (SHA256): 0x{}", hex_hash);
+    println!("0x{}", hex_hash);
 
     if let Some(out_path) = args.output {
         let mut f = File::create(out_path)?;

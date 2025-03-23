@@ -97,10 +97,9 @@ fn verify_ethereum_signature(msg: &[u8], sig_data: &SignatureData) -> Option<[u8
     let signature = Signature::from_slice(r_s).ok()?;
 
     // Ethereum message prefix hash
-    let hex_msg = hex::encode(msg);
     let mut hasher = Keccak256::new();
-    hasher.update(format!("\x19Ethereum Signed Message:\n{}", hex_msg.len()));
-    hasher.update(hex_msg.as_bytes());
+    hasher.update(b"\x19Ethereum Signed Message:\n32");
+    hasher.update(msg);
     let message_hash = hasher.finalize();
 
     let verifying_key = VerifyingKey::recover_from_prehash(&message_hash, &signature, recovery_id).ok()?;
