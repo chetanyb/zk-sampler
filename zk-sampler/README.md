@@ -132,7 +132,7 @@ This command will also generate `public_values.bin` as one of the proof artifact
 #### 📤 4. Decode Public Values
 
 ```bash
-cargo run --release --bin decode_public_values -- public_values.bin
+cargo run --release --bin decode_public -- --input public_values.bin
 ```
 
 Outputs:
