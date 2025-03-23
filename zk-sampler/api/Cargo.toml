@@ -1,0 +1,19 @@
+[package]
+name = "zk-sampler-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { workspace = true }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dotenv = "0.15"
+sp1-sdk = { workspace = true }
+zk-sampler-lib = { path = "../lib" }
+hex = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+hound = "3"
+alloy-sol-types = { workspace = true }

@@ -180,7 +180,39 @@ export default function Editor() {
         // as it's handled by the component itself
         console.log("Sample button clicked");
     };
+    const generateProof = async () => {
+        if (!audioURL || !fileName) {
+            alert("Missing audio input");
+            return;
+        }
+        try {
+            setProcessing(true);
+            const formData = new FormData();
+            const res = await fetch(audioURL);
+            const blob = await res.blob();
+            formData.append('audio', blob, fileName);
+            formData.append('transformations', JSON.stringify([
+                ...(audioEffects.reverse ? ['Reverse'] : [])
+            ]));
 
+            const response = await fetch('http://localhost:3001/prove', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ Proof generated!");
+            } else {
+                alert("❌ Proof failed");
+            }
+        } catch (err) {
+            console.error("Proof generation error", err);
+            alert("Error generating proof");
+        } finally {
+            setProcessing(false);
+        }
+    };
     const handleSignClick = () => {
         // This would trigger Privy wallet in a real implementation
         console.log("Sign with Privy wallet");
@@ -201,13 +233,25 @@ export default function Editor() {
 
     const handleSaveEdit = (effects) => {
         console.log("Applied effects:", effects);
+
         // Make sure effects object has all required properties
         const safeEffects = {
             reverse: effects?.reverse || false,
             stretch: effects?.speed || 1.0,
             pitch: effects?.pitch || 0,
         };
+
+        // Update audio effects state for displaying badges
         setAudioEffects(safeEffects);
+
+        // THIS IS THE IMPORTANT FIX: Update the audio URL to play the processed audio instead of the original
+        if (effects.processedAudioURL) {
+            console.log("Updating audio to processed version:", effects.processedAudioURL.substring(0, 50) + "...");
+            setAudioURL(effects.processedAudioURL);
+        } else {
+            console.warn("No processed audio URL was returned");
+        }
+
         setIsEditing(false);
 
         // Simulate processing and proof generation
@@ -453,13 +497,22 @@ export default function Editor() {
                         <p className="text-green-300/80 text-sm mb-4">
                             Your sample has been processed and a zero-knowledge proof has been generated successfully.
                         </p>
-                        <div className="flex justify-center">
-                            <button className="relative px-6 py-2 font-medium rounded-md overflow-hidden transition-all duration-300">
-                                <span className="relative z-10 flex items-center justify-center gap-2">
-                                    <Music className="w-4 h-4" />
-                                    <span>Download Sample</span>
-                                </span>
-                                <span className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-600 opacity-80 hover:opacity-90 transition-opacity" />
+                        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
+                            <a
+                                href={audioURL}
+                                download="processed_audio.wav"
+                                className="inline-flex items-center gap-2 px-6 py-2 rounded-md font-medium bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:opacity-90 transition-all"
+                            >
+                                <Music className="w-4 h-4" />
+                                Download Sample
+                            </a>
+
+                            <button
+                                onClick={generateProof}
+                                className="inline-flex items-center gap-2 px-6 py-2 rounded-md font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 transition-all"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Generate Proof
                             </button>
                         </div>
                     </motion.div>

@@ -9,7 +9,7 @@ name = "zk-sampler"
 path = "src/bin/main.rs"
 
 [dependencies]
-sp1-sdk = "4.0.0"
+sp1-sdk = { workspace = true }
 clap = { version = "4.4", features = ["derive", "env"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -20,7 +20,7 @@ hound = { workspace = true }
 zk-sampler-lib = { path = "../lib" }
 anyhow = "1.0.86"
 sha2 = "0.10.8"
-alloy-sol-types = "0.7.7"
+alloy-sol-types = { workspace = true }
 
 [build-dependencies]
 sp1-build = "4.0.0"
