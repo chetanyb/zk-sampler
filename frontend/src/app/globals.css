@@ -1,4 +1,49 @@
 @import "tailwindcss";
+@tailwind utilities;
+
+@layer utilities {
+  @keyframes shimmer {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
+  }
+}
+
+@theme inline {
+  --animate-aurora: aurora 60s linear infinite;
+  @keyframes aurora {
+    from {
+      background-position:
+              50% 50%,
+              50% 50%;
+    }
+    to {
+      background-position:
+              350% 50%,
+              350% 50%;
+    }
+  }
+}
 
 :root {
   --background: #ffffff;
