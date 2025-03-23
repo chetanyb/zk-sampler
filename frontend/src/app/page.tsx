@@ -3,8 +3,15 @@
 import { AuroraBackground } from '@/components/ui/aurora-background';
 import { ShootingStars } from '@/components/ui/shooting-stars';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleNavigateToEditor = () => {
+    router.push('/editor');
+  };
+
   return (
       <main className="relative min-h-screen flex items-center justify-center overflow-hidden bg-black text-white">
         <AuroraBackground>
@@ -21,11 +28,13 @@ export default function Home() {
               </p>
             </motion.h1>
 
-            <button className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+            <button
+                onClick={handleNavigateToEditor}
+                className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
               <span className="absolute inset-[-1000%] animate-spin-slow bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
               <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-2 text-sm font-medium text-white backdrop-blur-3xl">
-              Border Magic
-              </span>
+              Create Magic
+            </span>
             </button>
           </div>
         </AuroraBackground>
