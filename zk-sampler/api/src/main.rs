@@ -20,7 +20,7 @@ use types::AppState;
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter("info")
+        .with_env_filter("debug")
         .init();
 
     info!("🌀 Starting zkSampler API...");
@@ -49,7 +49,7 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
     let listener = TcpListener::bind(addr).await.unwrap();
     info!("🚀 Server running on http://{}", addr);
     axum::serve(listener, app).await.unwrap();

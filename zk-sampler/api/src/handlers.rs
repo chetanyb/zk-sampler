@@ -4,10 +4,25 @@ use std::{ path::PathBuf };
 use sp1_sdk::{SP1Stdin};
 use axum::extract::Multipart;
 use tokio::fs;
+use serde::{Serialize, Deserialize};
 
 use crate::types::{AppState, ProofData, ProofResponse, HexSignatureData};
 use zk_sampler_lib::{AudioTransform, AudioTransformInput, SignatureData, AudioProofPublicValues, reverse_audio, pitch_shift, time_stretch};
 use alloy_sol_types::SolType;
+
+// Create a displayable version of the input for logging
+#[derive(Serialize, Deserialize)]
+struct LoggableInput {
+    sample_rate: u32,
+    transformations: Vec<String>,
+    signature_data: Option<LoggableSignatureData>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct LoggableSignatureData {
+    signature: String,
+    public_key: String,
+}
 
 pub async fn health_check() -> &'static str {
     "OK"
@@ -94,6 +109,7 @@ pub async fn generate_proof(
     let mut sample_rate = 44100u32;
     let mut transformations: Option<Vec<AudioTransform>> = None;
     let mut signature_data: Option<SignatureData> = None;
+    let mut transformation_strings: Vec<String> = Vec::new(); // For logging
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
@@ -101,18 +117,45 @@ pub async fn generate_proof(
         match name.as_str() {
             "audio" => {
                 let bytes = field.bytes().await.unwrap();
+                info!("Received audio file: {} bytes", bytes.len());
                 let cursor = std::io::Cursor::new(bytes);
                 let mut reader = hound::WavReader::new(cursor).unwrap();
                 sample_rate = reader.spec().sample_rate;
                 audio_data = Some(reader.samples::<i16>().filter_map(Result::ok).collect());
+                info!("Audio decoded: {} samples at {}Hz",
+                      audio_data.as_ref().map_or(0, |d| d.len()),
+                      sample_rate);
             }
             "transformations" => {
                 let json = field.text().await.unwrap();
-                transformations = Some(serde_json::from_str(&json).unwrap());
+                info!("Received transformations: {}", json);
+
+                // Safely parse the transformations
+                match serde_json::from_str::<Vec<AudioTransform>>(&json) {
+                    Ok(parsed) => {
+                        transformations = Some(parsed.clone());
+
+                        // Create human-readable strings for logging
+                        transformation_strings = parsed.iter().map(|t| {
+                            match t {
+                                AudioTransform::Reverse => "Reverse".to_string(),
+                                AudioTransform::Pitch(val) => format!("Pitch({})", val),
+                                AudioTransform::Stretch(val) => format!("Stretch({})", val),
+                            }
+                        }).collect();
+                    },
+                    Err(e) => {
+                        info!("Error parsing transformations: {}", e);
+                        // Return early with error
+                        return ProofResponse::error(format!("Failed to parse transformations: {}", e));
+                    }
+                };
             }
             "signature_data" => {
                 let json = field.text().await.unwrap();
+                info!("Received signature data: {}", json);
                 let sig: HexSignatureData = serde_json::from_str(&json).unwrap();
+
                 signature_data = Some(SignatureData {
                     signature: hex::decode(sig.signature.trim_start_matches("0x")).unwrap(),
                     public_key: hex::decode(sig.public_key.trim_start_matches("0x")).unwrap(),
@@ -133,6 +176,16 @@ pub async fn generate_proof(
         sample_rate,
         transformations: transformations.unwrap(),
         signature_data,
+    };
+
+    // Create a loggable version of the input with hex-encoded signature data
+    let loggable_input = LoggableInput {
+        sample_rate: input.sample_rate,
+        transformations: transformation_strings,
+        signature_data: input.signature_data.as_ref().map(|sd| LoggableSignatureData {
+            signature: format!("0x{}", hex::encode(&sd.signature)),
+            public_key: format!("0x{}", hex::encode(&sd.public_key)),
+        }),
     };
 
     let mut stdin = SP1Stdin::new();
